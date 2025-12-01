@@ -77,22 +77,7 @@ run_for_profile() {
   echo "[INFO] Load spec     : ${LOAD_SPEC}"
   echo "[INFO] recordcount   : ${RECORDCOUNT}"
   echo "[INFO] Est. dataset  : ~${DATASET_GIB} GiB (logical key+value payload)"
-  echo "[INFO] BASE_DB       : ${BASE_DB}"
   echo "=================================================="
-
-  # -------- load base DB --------
-  echo "==============================================="
-  echo "[LOAD] Creating base DB at: ${BASE_DB}"
-  echo "==============================================="
-
-  if [ -f "${BASE_DB}" ]; then
-    echo "[WARN] Base DB exists, removing it."
-    rm -f "${BASE_DB}"
-  fi
-
-  "${YCSBC_BIN}" -db splinterdb -threads "${THREADS}" \
-    -L "${LOAD_SPEC}" \
-    -p splinterdb.filename "${BASE_DB}"
 
   # Inner helper for one workload
   run_one_workload() {
@@ -101,15 +86,20 @@ run_for_profile() {
 
     echo "==============================================="
     echo "[RUN] Workload ${wl_name} (${PROFILE})"
-    echo "Copy DB: ${COPY_DB} from Load spec     : ${LOAD_SPEC}"
-    echo "Spec   : ${WORKLOAD_DIR}/${wl_file}"
+    echo "[RUN] Using DB: ${COPY_DB}"
+    echo "Load spec : ${LOAD_SPEC}"
+    echo "Run spec  : ${WORKLOAD_DIR}/${wl_file}"
     echo "==============================================="
 
-    rm -f "${COPY_DB}"
-    cp "${BASE_DB}" "${COPY_DB}"
+    # Always recreate DB for this workload
+    if [ -f "${COPY_DB}" ]; then
+      echo "[WARN] DB exists, removing it: ${COPY_DB}"
+      rm -f "${COPY_DB}"
+    fi
 
+    # Load + run in a single YCSBC invocation
     "${YCSBC_BIN}" -db splinterdb -threads "${THREADS}" \
-      -P "${LOAD_SPEC}" \
+      -L "${LOAD_SPEC}" \
       -W "${WORKLOAD_DIR}/${wl_file}" \
       -p splinterdb.filename "${COPY_DB}"
 
@@ -117,13 +107,14 @@ run_for_profile() {
     rm -f "${COPY_DB}"
   }
 
-  # -------- run A~F on copy DB --------
+  # -------- run A~F (each with its own load+run) --------
   run_one_workload "A" "workloada.spec"
   run_one_workload "B" "workloadb.spec"
   run_one_workload "C" "workloadc.spec"
   run_one_workload "D" "workloadd.spec"
   run_one_workload "E" "workloade.spec"
   run_one_workload "F" "workloadf.spec"
+
 }
 
 # =========================================
