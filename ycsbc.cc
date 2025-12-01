@@ -38,9 +38,9 @@ std::map<string, string> default_props = {
   //
   // splinterdb config defaults
   //
-  {"splinterdb.filename", "splinterdb.db"},
+  {"splinterdb.filename", "/mnt/nvme/splinterdb.db"},
   {"splinterdb.cache_size_mb", "4096"},
-  {"splinterdb.disk_size_gb", "128"},
+  {"splinterdb.disk_size_gb", "256"},
 
   {"splinterdb.max_key_size", "24"},
   {"splinterdb.use_log", "1"},
@@ -62,7 +62,7 @@ std::map<string, string> default_props = {
   {"splinterdb.use_stats", "0"},
   {"splinterdb.reclaim_threshold", "0"},
 
-  {"rocksdb.database_filename", "rocksdb.db"},
+  {"rocksdb.database_filename", "/mnt/nvme/rocksdb.db"},
 };
 
 
@@ -320,6 +320,8 @@ void ParseCommandLine(int argc, const char *argv[],
     } else if (strcmp(argv[argindex], "-W") == 0
                || strcmp(argv[argindex], "-P") == 0
                || strcmp(argv[argindex], "-L") == 0) {
+
+
       WorkloadProperties workload;
       if (saw_load_workload) {
         workload = load_workload;

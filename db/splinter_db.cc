@@ -37,12 +37,12 @@ SplinterDB::SplinterDB(utils::Properties &props, bool preloaded) {
   splinterdb_cfg.cache_use_stats          = props.GetIntProperty("splinterdb.cache_use_stats");
   splinterdb_cfg.cache_logfile            = props.GetProperty("splinterdb.cache_logfile").c_str();
   splinterdb_cfg.btree_rough_count_height = props.GetIntProperty("splinterdb.btree_rough_count_height");
-  splinterdb_cfg.filter_remainder_size    = props.GetIntProperty("splinterdb.filter_remainder_size");
-  splinterdb_cfg.filter_index_size        = props.GetIntProperty("splinterdb.filter_index_size");
+  //splinterdb_cfg.filter_remainder_size    = props.GetIntProperty("splinterdb.filter_remainder_size");
+  //splinterdb_cfg.filter_index_size        = props.GetIntProperty("splinterdb.filter_index_size");
   splinterdb_cfg.use_log                  = props.GetIntProperty("splinterdb.use_log");
   splinterdb_cfg.memtable_capacity        = props.GetIntProperty("splinterdb.memtable_capacity");
   splinterdb_cfg.fanout                   = props.GetIntProperty("splinterdb.fanout");
-  splinterdb_cfg.max_branches_per_node    = props.GetIntProperty("splinterdb.max_branches_per_node");
+  //splinterdb_cfg.max_branches_per_node    = props.GetIntProperty("splinterdb.max_branches_per_node");
   splinterdb_cfg.use_stats                = props.GetIntProperty("splinterdb.use_stats");
   splinterdb_cfg.reclaim_threshold        = props.GetIntProperty("splinterdb.reclaim_threshold");
 
