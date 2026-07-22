@@ -3,7 +3,7 @@
 
 # Load phase for ATC'20 SplinterDB YCSB (100B values)
 
-recordcount=673000000
+recordcount=685000000
 workload=com.yahoo.ycsb.workloads.CoreWorkload
 
 # Key: 24 bytes (user + zeropadding)

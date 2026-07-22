@@ -6,6 +6,10 @@
 - Performance improvements
 - New features (e.g. running Load and Workloads in separate executions)
 
+> **Here to build a TreePass dataset?** Jump to
+> [Generating a key-only dataset (used by TreePass)](#generating-a-key-only-dataset-used-by-treepass)
+> at the end of this README.
+
 ## Quick Start for Debian-based systems
 
 Install SplinterDB (https://github.com/vmware/splinterdb)
@@ -24,16 +28,17 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 Run Workload A with a [SplinterDB](https://splinterdb.org)-based
 implementation of the database, for example:
 ```sh
-$ ./ycsbc -db splinterdb -threads 4 -L workloads/load.spec -W workloads/workloada.spec
+$ ./ycsbc -db splinterdb -threads 4 -L workloads/K24BV100B/load.spec -W workloads/K24BV100B/workloada.spec
 ```
 
 Note that we do not have load and run commands as the original YCSB. Specify
 how many records to load by the `recordcount` property. Reference properties
-listed in the `.spec` files in the workloads dir.
+are listed in the `.spec` files under `workloads/`. Two ready-made profiles are
+provided: `K24BV100B` (24 B key / 100 B value) and `K24BV1024B` (24 B / 1024 B).
 
 To inspect generated data, use the `basic` db and set property `basicdb.verbose`, e.g.
 ```sh
-$ ./ycsbc -db basic -p basicdb.verbose 1 -L workloads/load.spec -w recordcount 3 -w fieldlength 5
+$ ./ycsbc -db basic -p basicdb.verbose 1 -L workloads/K24BV100B/load.spec -w recordcount 3 -w fieldlength 5
 ```
 ```
 # Loading records:      3
@@ -42,7 +47,7 @@ INSERT usertable user12161962213042174405 [ field0=q____ ]
 INSERT usertable user09929646806074584996 [ field0=h____ ]
 INSERT usertable user16626593026977353223 [ field0=h____ ]
 # Load throughput (KTPS)
-basic   workloads/load.spec     1       7.16204
+basic   workloads/K24BV100B/load.spec   1       7.16204
 ```
 The `field0=` is not written to the database, it is only for display.
 
@@ -56,7 +61,7 @@ command line with the `-w` flags.  Common overrides:
 
 Putting that all together, to use `max(24, 4 + 21) = 25` byte keys and 3 byte values, load 5 records and then run Workload A with 6 operations, run this:
 ```sh
-$ ./ycsbc -db basic -p basicdb.verbose 1 -L workloads/load.spec -w zeropadding 21 -w fieldlength 3 -w recordcount 5 -W workloads/workloada.spec -w operationcount 6
+$ ./ycsbc -db basic -p basicdb.verbose 1 -L workloads/K24BV100B/load.spec -w zeropadding 21 -w fieldlength 3 -w recordcount 5 -W workloads/K24BV100B/workloada.spec -w operationcount 6
 ```
 ```
 # Loading records:      5
@@ -67,7 +72,7 @@ INSERT usertable user016626593026977353223 [ field0=h__ ]
 INSERT usertable user014394277620009763814 [ field0=x__ ]
 INSERT usertable user003232700585171816769 [ field0=h__ ]
 # Load throughput (KTPS)
-basic   workloads/load.spec     1       7.89507
+basic   workloads/K24BV100B/load.spec   1       7.89507
 # Transaction count:    6
 A new thread begins working.
 UPDATE usertable user012161962213042174405 [ field0=iii ]
@@ -77,10 +82,34 @@ READ usertable user009929646806074584996 < all fields >
 UPDATE usertable user009929646806074584996 [ field0=vvv ]
 UPDATE usertable user014394277620009763814 [ field0=vvv ]
 # Transaction throughput (KTPS)
-basic   workloads/workloada.spec        1       29.4284
+basic   workloads/K24BV100B/workloada.spec      1       29.4284
 ```
 
 Or to replicate the "Workload A" experiment from Figure 5(b) in [Conway et al, 2020](https://www.usenix.org/system/files/atc20-conway.pdf) on SplinterDB with 12 threads, you might run
 ```sh
-$ ./ycsbc -db splinterdb -threads 12 -L workloads/load.spec -w fieldlength 1024 -w recordcount 84000000 -W workloads/workloada.spec -w operationcount 10000000
+$ ./ycsbc -db splinterdb -threads 12 -L workloads/K24BV1024B/load.spec -W workloads/K24BV1024B/workloada.spec -w operationcount 10000000
 ```
+
+## Generating a key-only dataset (used by TreePass)
+
+The [TreePass](https://github.com/unist-ssl/TreePass) experiments use this
+fork only to generate their load-key files. TreePass runs the benchmark with
+its own bench rather than YCSB-C directly, because its evaluation needs
+features beyond stock YCSB-C — such as a MixGraph-style `prefix` query
+distribution, generated query keys that are staged and reused across runs, and
+a separate untimed warmup / measured phase split, among others. Dump the load
+keys with the `basic` db and keep the key column:
+
+```sh
+$ ./ycsbc -db basic -p basicdb.verbose 1 -L workloads/K24BV100B/load.spec \
+    | awk '/^INSERT usertable/ {print $3}' > dry_run_673M.csv
+```
+
+The result is one 24-byte key per line, which TreePass loads directly.
+`workloads/K24BV100B` → 685 M × (24 B key / 100 B value); `workloads/K24BV1024B`
+→ 84.75 M × (24 B / 1024 B).
+
+The example file names above (`dry_run_673M.csv` / `dry_run_84M.csv`) use the
+load size — the number of keys TreePass workloads A/B/C/F insert into the DB
+— while each spec's `recordcount` is set slightly higher so that YCSB-D and
+YCSB-E have extra keys (~12 M / ~750 K) to consume as fresh inserts.
