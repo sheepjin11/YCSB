@@ -11,11 +11,13 @@
 #include <string>
 #include "db/basic_db.h"
 #include "db/lock_stl_db.h"
+#ifndef YCSBC_MINIMAL
 #include "db/redis_db.h"
 #include "db/tbb_rand_db.h"
 #include "db/tbb_scan_db.h"
 #include "db/splinter_db.h"
 #include "db/rocks_db.h"
+#endif
 
 using namespace std;
 using ycsbc::DB;
@@ -27,6 +29,7 @@ DB* DBFactory::CreateDB(utils::Properties &props, bool preloaded) {
   } else if (props["dbname"] == "lock_stl") {
     assert(!preloaded);
     return new LockStlDB;
+#ifndef YCSBC_MINIMAL
   } else if (props["dbname"] == "redis") {
     int port = stoi(props["port"]);
     int slaves = stoi(props["slaves"]);
@@ -41,6 +44,7 @@ DB* DBFactory::CreateDB(utils::Properties &props, bool preloaded) {
   } else if (props["dbname"] == "tbb_scan") {
     assert(!preloaded);
     return new TbbScanDB;
+#endif
   } else return NULL;
 }
 
